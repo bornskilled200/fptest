@@ -1,4 +1,3 @@
-#undef __STRICT_ANSI__
 #include <stdio.h>
 #include <float.h>
 #include <time.h>
@@ -80,20 +79,19 @@ void UFprintWorld(UFobject **world, int size, int tick) {
     printf("tick: %d\n", tick);
     for (i = 0; i < size; i++) {
         UFobject *object = world[i];
-        printf("%f, %f, %f, %f, %p\n", object->x, object->y, object->vx, object->vy, object->updatefun);
+        printf("%15a, %15a, %15a, %15a, %p\n", object->x, object->y, object->vx, object->vy, object->updatefun);
     }
 }
-#include <x86intrin.h>
-#include <cpuid.h>
 
 int main() {
     int i, j, ticks;
     double accumulator;
     time_t previousTime;
-    UFobject player = {.x = 5, .vx = 1, .vy =1, .updatefun = UFdefaultUpdate_fun};
-    UFanimal animal = {.object.vx = 1, .object.vy =1, .target=&player, .object.updatefun = UFanimalUpdate_fun};
-    UFobject *world[2] = {&player, &animal};
+    UFobject player = {.x = 5, .vx = 1, .vy =1, .updatefun = (UFupdate) UFdefaultUpdate_fun};
+    UFanimal animal = {.object.vx = 1, .object.vy =1, .target=&player, .object.updatefun = (UFupdate) UFanimalUpdate_fun};
+    UFobject *world[2] = {&player, (UFobject *) &animal};
     int size = sizeof(world) / sizeof(*world);
+
 
     puts("# System Information Begin");
     #ifdef __gnu_linux__
@@ -115,8 +113,8 @@ int main() {
      * like a text file.
      */
 
-    if( (pPipe = popen( "wmic cpu get name", "rt" )) == NULL )
-        exit( 1 );
+    if( (pPipe = _popen( "wmic cpu get name", "rt" )) == NULL )
+        return 1;
 
     /* Read pipe until end of file, or an error occurs. */
 
@@ -141,6 +139,7 @@ int main() {
     testIntermediateStore();
     puts("# System Information End");
 
+
     ticks = 0;
     UFprintWorld(world, size, ticks);
     accumulator = 0;
@@ -149,7 +148,7 @@ int main() {
         for (i = 0, accumulator += getDelta(&previousTime); accumulator > SECONDS_PER_UPDATE || i < 5; i++) {
             for (j = 0; j < size; j++) {
                 UFobject *object = world[j];
-                (object->updatefun)(world, object, SECONDS_PER_UPDATE);
+                (object->updatefun)((void **) world, object, SECONDS_PER_UPDATE);
             }
             accumulator -= SECONDS_PER_UPDATE;
             ticks++;
