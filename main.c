@@ -1,8 +1,8 @@
+#undef __STRICT_ANSI__
 #include <stdio.h>
 #include <float.h>
 #include <time.h>
 #include <math.h>
-#include <windows.h>
 
 #define UNUSED(x) (void)(x)
 
@@ -107,7 +107,34 @@ int main() {
     free(arg);
     fclose(cpuinfo);
     #elif _WIN32
-    system("wmic cpu get name");
+    char   psBuffer[128];
+    FILE   *pPipe;
+
+    /* Run DIR so that it writes its output to a pipe. Open this
+     * pipe with read text attribute so that we can read it
+     * like a text file.
+     */
+
+    if( (pPipe = popen( "wmic cpu get name", "rt" )) == NULL )
+        exit( 1 );
+
+    /* Read pipe until end of file, or an error occurs. */
+
+    while(fgets(psBuffer, 128, pPipe))
+    {
+        printf(psBuffer);
+    }
+
+
+    /* Close pipe and print return value of pPipe. */
+    if (feof( pPipe))
+    {
+        printf( "\nProcess returned %d\n", _pclose( pPipe ) );
+    }
+    else
+    {
+        printf( "Error: Failed to read the pipe to the end.\n");
+    }
     #endif
 
     printf("FLT_EVAL_METHOD = %d\n", FLT_EVAL_METHOD);
