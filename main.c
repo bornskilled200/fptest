@@ -7,46 +7,8 @@
 
 #define UNUSED(x) (void)(x)
 
-typedef void (*UFupdate) (void **, void *, double);
-
-typedef struct
-{
-    float    x, y;
-    float    vx, vy;
-    UFupdate updatefun;
-}            UFobject;
-
-typedef struct
-{
-    UFobject object;
-    UFobject *target;
-}            UFanimal;
-
-void UFdefaultUpdate_fun (UFobject **world, UFobject *self, double delta)
-{
-    UNUSED(world);
-
-    self->x += self->vx * delta;
-    self->y += self->vy * delta;
-}
-
-void UFanimalUpdate_fun (UFobject **world, UFanimal *self, double delta)
-{
-    if (self->target == NULL)
-        return;
-
-    float dx  = self->target->x - self->object.x;
-    float dy  = self->target->y - self->object.y;
-    float len = sqrtf(dx * dx + dy * dy);
-    self->object.vx += dx / len * 2;
-    self->object.vy += dy / len * 2;
-    UFdefaultUpdate_fun(world, (UFobject *) self, delta);
-}
-
-
 void systemInformation ()
 {
-
 #ifdef __gnu_linux__
     FILE *cpuinfo = fopen("/proc/cpuinfo", "rb");
     char *arg = 0;
@@ -92,11 +54,11 @@ void systemInformation ()
 #endif
 }
 
-float g_three = 3.0f;
-float g_seven = 7.0f;
 
 void testFloatIntermediate ()
 {
+    float g_three = 3.0f;
+    float g_seven = 7.0f;
     float f = g_three / g_seven;
     puts("------------------");
     puts("Test Float immediate\n");
@@ -125,6 +87,43 @@ void testFloatEvaluation ()
     puts(floatEvaluation == 0 ? "Determinisitc" : "Undeterministic");
     puts("------------------");
 
+}
+
+
+typedef void (*UFupdate) (void **, void *, double);
+
+typedef struct
+{
+    float    x, y;
+    float    vx, vy;
+    UFupdate updatefun;
+}            UFobject;
+
+typedef struct
+{
+    UFobject object;
+    UFobject *target;
+}            UFanimal;
+
+void UFdefaultUpdate_fun (UFobject **world, UFobject *self, double delta)
+{
+    UNUSED(world);
+
+    self->x += self->vx * delta;
+    self->y += self->vy * delta;
+}
+
+void UFanimalUpdate_fun (UFobject **world, UFanimal *self, double delta)
+{
+    if (self->target == NULL)
+        return;
+
+    float dx  = self->target->x - self->object.x;
+    float dy  = self->target->y - self->object.y;
+    float len = sqrtf(dx * dx + dy * dy);
+    self->object.vx += dx / len * 2;
+    self->object.vy += dy / len * 2;
+    UFdefaultUpdate_fun(world, (UFobject *) self, delta);
 }
 
 double getDelta (time_t *previousTime)
