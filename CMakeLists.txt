@@ -27,7 +27,8 @@ ENDIF(CMAKE_BUILD_TOOL MATCHES "(msdev|devenv|nmake)")
       ENDIF(NOT CMAKE_C_FLAGS MATCHES "-Wall")
 ENDIF(CMAKE_BUILD_TOOL MATCHES "make")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -ffloat-store -mfpmath=sse -msse2")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -mfpmath=sse -ffloat-store -msse2")
+add_definitions("-DCOMPILER_ARGS=\"${CMAKE_C_FLAGS}\"")
 
 set(SOURCE_FILES main.c)
 add_executable(fptest ${SOURCE_FILES})
