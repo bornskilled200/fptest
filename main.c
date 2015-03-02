@@ -1,9 +1,12 @@
-#define __USE_MINGW_ANSI_STDIO 1
-
-#include <stdio.h>
-#include <float.h>
 #include <time.h>
 #include <math.h>
+
+#include <stdio.h>
+
+#include <float.h>
+#ifndef FLT_EVAL_METHOD
+#define FLT_EVAL_METHOD -1
+#endif
 
 #define UNUSED(x) (void)(x)
 
@@ -19,14 +22,9 @@ void systemInformation ()
     }
     free(arg);
     fclose(cpuinfo);
-    #elif _WIN32
+#elif _WIN32
     char psBuffer[128];
     FILE *pPipe;
-
-    /* Run DIR so that it writes its output to a pipe. Open this
-     * pipe with read text attribute so that we can read it
-     * like a text file.
-     */
 
     if ((pPipe = _popen("wmic cpu get name", "rt")) == NULL)
     {
@@ -36,9 +34,9 @@ void systemInformation ()
 
     /* Read pipe until end of file, or an error occurs. */
 
-    while (fgets(psBuffer, 128, pPipe))
+    while (fgets(psBuffer, sizeof(psBuffer) / sizeof(*psBuffer), pPipe))
     {
-        printf(psBuffer);
+        puts(psBuffer);
     }
 
 
@@ -54,21 +52,7 @@ void systemInformation ()
 #endif
 }
 
-
-void testFloatIntermediate ()
-{
-    float g_three = 3.0f;
-    float g_seven = 7.0f;
-    float f = g_three / g_seven;
-    puts("------------------");
-    puts("Test Float immediate\n");
-    printf("%a %f\n", f, f);
-    printf("%a %f\n", g_three / g_seven, g_three / g_seven);
-    puts(f == g_three / g_seven ? "Determinisitc" : "Undeterministic");
-    puts("------------------");
-}
-
-void testFloatEvaluation ()
+void testEvaluationf ()
 {
     float g_one     = 1.0f;
     float g_small_1 = FLT_EPSILON * 0.5;
@@ -148,7 +132,7 @@ void UFprintWorld (UFobject **world, int size, int tick)
     puts("");
 }
 
-void testPhysicWorld ()
+void testPhysicsf ()
 {
     int      i, j, ticks;
     double   accumulator;
@@ -184,7 +168,7 @@ void testPhysicWorld ()
 int main ()
 {
     puts("# Compililation Information Begin");
-    puts(COMPILER_ARGS);
+    puts(COMPILER_NAME COMPILER_ARGS);
     printf("FLT_EVAL_METHOD = %d\n", FLT_EVAL_METHOD);
     puts("# Compililation Information End\n");
 
@@ -193,8 +177,7 @@ int main ()
     puts("# System Information End\n");
 
     puts("# Test Information Begin");
-    testFloatIntermediate();
-    testFloatEvaluation();
-    testPhysicWorld();
+    testEvaluationf();
+    testPhysicsf();
     puts("# Test Information End\n");
 }
