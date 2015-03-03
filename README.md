@@ -31,4 +31,5 @@ https://randomascii.wordpress.com/2012/03/21/intermediate-floating-point-precisi
 
 ###Alternative Math functions
 Sin/Cos: http://lab.polygonal.de/?p=205
+
 Square Root: http://www.codeproject.com/Articles/69941/Best-Square-Root-Method-Algorithm-Function-Precisi
