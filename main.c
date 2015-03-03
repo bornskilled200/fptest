@@ -4,6 +4,8 @@
 #include <stdio.h>
 
 #include <float.h>
+#include <stdint.h>
+
 #ifndef FLT_EVAL_METHOD
 #define FLT_EVAL_METHOD -1
 #endif
@@ -13,8 +15,7 @@
 #define COMPILER_ARGS ""
 #endif
 
-void systemInformation ()
-{
+void systemInformation() {
 #ifdef __gnu_linux__
     FILE *cpuinfo = fopen("/proc/cpuinfo", "rb");
     char *arg = 0;
@@ -29,8 +30,7 @@ void systemInformation ()
     char psBuffer[128];
     FILE *pPipe;
 
-    if ((pPipe = _popen("wmic cpu get name", "rt")) == NULL)
-    {
+    if ((pPipe = _popen("wmic cpu get name", "rt")) == NULL) {
         fputs("Could not access wmic", stderr);
         return;
     }
@@ -44,66 +44,104 @@ void systemInformation ()
 #endif
 }
 
-void testEvaluationf ()
-{
-    float g_one     = 1.0f;
-    float g_small_1 = FLT_EPSILON * 0.5;
-    float g_small_2 = DBL_EPSILON * 0.5;
-    float g_small_3 = DBL_EPSILON * 0.5;
-    int   floatEvaluation;
+typedef unsigned char *byte_pointer;
 
-    if (((g_one + g_small_1) + g_small_2) + g_small_3 == 0x8p-3) floatEvaluation = 0;
-    else if (((g_one + g_small_1) + g_small_2) + g_small_3 == 0x8.0000080000008p-3) floatEvaluation = 2;
-    else floatEvaluation = -1;
+/*show bytes takes byte pointer as an argument
+  and prints memory contents from byte_pointer
+  to byte_pointer + len */
+void show_bytes(void *pointer, int len) {
+    unsigned char *start = pointer;
+    int i;
 
+    for (i = 0; i < len; i++)
+        printf("%.2x ", start[i]);
+}
+
+#define uf_printbytes(a) show_bytes((byte_pointer) &a, sizeof(a))
+
+union float32 {
+    int32_t i;
+    float f;
+};
+
+void testEvaluationf() {
+    float g_one = 1.0f;
+    float g_small_1 = (float) (FLT_EPSILON * 0.5);
+    float g_small_2 = (float) (DBL_EPSILON * 0.5);
+    float g_small_3 = (float) (DBL_EPSILON * 0.5);
+    int evaluationMethod;
+    union float32 fl0, fl1, fl2;
+    fl0.i = 0x3f800000;
+    UNUSED(fl1);
+    fl2.i = 0x3f800001;
+
+    float f = ((g_one + g_small_1) + g_small_2) + g_small_3;
+    if (f == fl0.f) evaluationMethod = 0;
+    else if (f == fl2.f) evaluationMethod = 2;
+    else evaluationMethod = -1;
 
     puts("------------------");
-    puts("Test Immediate store\n");
-    printf("%a; %f \n", ((g_one + g_small_1) + g_small_2) + g_small_3, ((g_one + g_small_1) + g_small_2) + g_small_3);
-    puts(floatEvaluation == 0 ? "Determinisitc" : "Undeterministic");
+    puts("Test Float Immediate store\n");
+    uf_printbytes(f);
+    printf("; %f \n", f);
+    printf("Runtime FLT_EVAL_METHOD: %d\n", evaluationMethod);
     puts("------------------");
 }
 
+union float64 {
+    int64_t i;
+    double f;
+};
 
-typedef void (*UFupdate) (void **, void *, double);
+void testEvaluationd() {
+    int evaluationMethod;
+    union float64 fl0, fl1, fl2;
+    UNUSED(fl0);
+    UNUSED(fl1);
+    UNUSED(fl2);
 
-typedef struct
-{
-    float    x, y;
-    float    vx, vy;
+    evaluationMethod = -1;
+
+    puts("------------------");
+    puts("Test Double Immediate store\n");
+    printf("Runtime FLT_EVAL_METHOD: %d\n", evaluationMethod);
+    puts("------------------");
+}
+
+typedef void (*UFupdate)(void **, void *, double);
+
+typedef struct {
+    float x, y;
+    float vx, vy;
     UFupdate updatefun;
-}            UFobject;
+} UFobject;
 
-typedef struct
-{
+typedef struct {
     UFobject object;
     UFobject *target;
-}            UFanimal;
+} UFanimal;
 
-void UFdefaultUpdate_fun (UFobject **world, UFobject *self, double delta)
-{
+void UFdefaultUpdate_fun(UFobject **world, UFobject *self, double delta) {
     UNUSED(world);
 
     self->x += self->vx * delta;
     self->y += self->vy * delta;
 }
 
-void UFanimalUpdate_fun (UFobject **world, UFanimal *self, double delta)
-{
+void UFanimalUpdate_fun(UFobject **world, UFanimal *self, double delta) {
     if (self->target == NULL)
         return;
 
-    float dx  = self->target->x - self->object.x;
-    float dy  = self->target->y - self->object.y;
+    float dx = self->target->x - self->object.x;
+    float dy = self->target->y - self->object.y;
     float len = sqrtf(dx * dx + dy * dy);
     self->object.vx += dx / len * 2;
     self->object.vy += dy / len * 2;
     UFdefaultUpdate_fun(world, (UFobject *) self, delta);
 }
 
-double getDelta (time_t *previousTime)
-{
-    time_t temp        = *previousTime;
+double getDelta(time_t *previousTime) {
+    time_t temp = *previousTime;
     time_t currentTime = time(previousTime);
     return difftime(currentTime, temp);
 }
@@ -111,38 +149,37 @@ double getDelta (time_t *previousTime)
 #define SECONDS_PER_UPDATE 1.0/60.0
 #define SIMULATE_TICKS 300
 
-void UFprintWorld (UFobject **world, int size, int tick)
-{
+void UFprintWorld(UFobject **world, int size, int tick) {
     int i;
     printf("tick: %0" "3" "d\n", tick);
-    for (i = 0; i < size; i++)
-    {
+    for (i = 0; i < size; i++) {
         UFobject *object = world[i];
-        printf("%d: %15a, %15a, %15a, %15a\n", i, object->x, object->y, object->vx, object->vy);
+        printf("%d: ", i);
+        uf_printbytes(object->x);
+        uf_printbytes(object->y);
+        uf_printbytes(object->vx);
+        uf_printbytes(object->vy);
+        puts("");
     }
     puts("");
 }
 
-void testPhysicsf ()
-{
-    int      i, j, ticks;
-    double   accumulator;
-    time_t   previousTime;
-    UFobject player    = {.x = 5, .vx = 1, .vy =1, .updatefun = (UFupdate) UFdefaultUpdate_fun};
-    UFanimal animal    = {.object.vx = 1, .object.vy =1, .target=&player, .object.updatefun = (UFupdate) UFanimalUpdate_fun};
+void testPhysicsf() {
+    int i, j, ticks;
+    double accumulator;
+    time_t previousTime;
+    UFobject player = {.x = 5, .vx = 1, .vy =1, .updatefun = (UFupdate) UFdefaultUpdate_fun};
+    UFanimal animal = {.object.vx = 1, .object.vy =1, .target=&player, .object.updatefun = (UFupdate) UFanimalUpdate_fun};
     UFobject *world[2] = {&player, (UFobject *) &animal};
-    int      size      = sizeof(world) / sizeof(*world);
+    int size = sizeof(world) / sizeof(*world);
 
     ticks = 0;
     UFprintWorld(world, size, ticks);
-    accumulator  = 0;
+    accumulator = 0;
     previousTime = time(NULL);
-    while (1)
-    {
-        for (i = 0, accumulator += getDelta(&previousTime); accumulator > SECONDS_PER_UPDATE || i < 5; i++)
-        {
-            for (j = 0; j < size; j++)
-            {
+    while (1) {
+        for (i = 0, accumulator += getDelta(&previousTime); accumulator > SECONDS_PER_UPDATE || i < 5; i++) {
+            for (j = 0; j < size; j++) {
                 UFobject *object = world[j];
                 (object->updatefun)((void **) world, object, SECONDS_PER_UPDATE);
             }
@@ -155,8 +192,7 @@ void testPhysicsf ()
     }
 }
 
-int main ()
-{
+int main() {
     puts("# Compililation Information Begin");
     puts(COMPILER_NAME COMPILER_ARGS);
     printf("FLT_EVAL_METHOD = %d\n", FLT_EVAL_METHOD);
@@ -168,6 +204,7 @@ int main ()
 
     puts("# Test Information Begin");
     testEvaluationf();
+    testEvaluationd();
     testPhysicsf();
     puts("# Test Information End\n");
 }
