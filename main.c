@@ -2,7 +2,6 @@
 #include <stdio.h>
 
 #include <time.h>
-#include <math.h>
 
 #include <float.h>
 #include <stdint.h>
@@ -117,6 +116,54 @@ typedef struct {
     UFobject *target;
 } UFanimal;
 
+float fastsin(float radians)
+{
+    //always wrap input angle to -PI..PI
+    if (radians < -3.14159265)
+        radians += 6.28318531;
+    else
+    if (radians >  3.14159265)
+        radians -= 6.28318531;
+
+//compute sine
+    if (radians < 0)
+        return 1.27323954 * radians + .405284735 * radians * radians;
+    else
+        return 1.27323954 * radians - 0.405284735 * radians * radians;
+}
+
+float fastcos(float radians)
+{
+    //always wrap input angle to -PI..PI
+    if (radians < -3.14159265)
+        radians += 6.28318531;
+    else
+    if (radians >  3.14159265)
+        radians -= 6.28318531;
+
+    //compute cosine: sin(radians + PI/2) = cos(radians)
+    radians += 1.57079632;
+    if (radians >  3.14159265)
+        radians -= 6.28318531;
+
+    if (radians < 0)
+        return 1.27323954 * radians + 0.405284735 * radians * radians;
+    else
+        return 1.27323954 * radians - 0.405284735 * radians * radians;
+}
+
+double fastsqrt(double fg)
+{
+    double n    = fg / 2.0;
+    double lstX = 0.0;
+    while (n != lstX)
+    {
+        lstX = n;
+        n    = (n + fg / n) / 2.0;
+    }
+    return n;
+}
+
 void UFdefaultUpdate_fun(UFobject **world, UFobject *self, double delta) {
     UNUSED(world);
 
@@ -132,7 +179,7 @@ void UFanimalUpdate_fun(UFobject **world, UFanimal *self, double delta) {
 
     dx = self->target->x - self->object.x;
     dy = self->target->y - self->object.y;
-    len = sqrtf(dx * dx + dy * dy);
+    len = fastsqrt(dx * dx + dy * dy);
     self->object.vx += dx / len * 2;
     self->object.vy += dy / len * 2;
     UFdefaultUpdate_fun(world, (UFobject *) self, delta);
@@ -175,10 +222,13 @@ void testPhysicsf() {
     int size = sizeof(world) / sizeof(*world);
 
     player.x=5;
+    player.y=0;
     player.vx =1;
     player.vy =1;
     player.updatefun = (UFupdate) UFdefaultUpdate_fun;
 
+    animal.object.x = 0;
+    animal.object.y = 0;
     animal.object.vx = 1;
     animal.object.vy = 1;
     animal.object.updatefun = (UFupdate) UFanimalUpdate_fun;
