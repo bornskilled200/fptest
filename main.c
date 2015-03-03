@@ -265,6 +265,10 @@ void testPhysicsf() {
 }
 
 int main() {
+    #ifdef MSVC
+    _PC_24
+    #endif
+
     puts("# Compililation Information Begin");
     puts(COMPILER_NAME COMPILER_ARGS);
     printf("FLT_EVAL_METHOD = %d\n", FLT_EVAL_METHOD);

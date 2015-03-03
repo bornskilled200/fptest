@@ -35,7 +35,11 @@ ENDIF(UF_WARNINGS)
 
 IF(UF_EVALUATION)
     IF(MSVC)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:SSE")
+        IF(MSVC_VERSION LESS EQUAL 1600)
+
+        ELSE(MSVC_VERSION LESS EQUAL 1600)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:SSE")
+        ENDIF(MSVC_VERSION LESS EQUAL 1600)
     ELSEIF(MINGW)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -mfpmath=sse -ffloat-store -msse2")
     ENDIF(MSVC)
