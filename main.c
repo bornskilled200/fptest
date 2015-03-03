@@ -9,6 +9,9 @@
 #endif
 
 #define UNUSED(x) (void)(x)
+#ifndef COMPILER_ARGS
+#define COMPILER_ARGS ""
+#endif
 
 void systemInformation ()
 {
@@ -31,24 +34,13 @@ void systemInformation ()
         fputs("Could not access wmic", stderr);
         return;
     }
-
-    /* Read pipe until end of file, or an error occurs. */
-
-    while (fgets(psBuffer, sizeof(psBuffer) / sizeof(*psBuffer), pPipe))
-    {
+    while (fgets(psBuffer, sizeof(psBuffer) / sizeof(*psBuffer), pPipe)) {
         puts(psBuffer);
     }
-
-
-    /* Close pipe and print return value of pPipe. */
     if (feof(pPipe))
-    {
         printf("\nProcess returned %d\n", _pclose(pPipe));
-    }
     else
-    {
         printf("Error: Failed to read the pipe to the end.\n");
-    }
 #endif
 }
 
@@ -70,7 +62,6 @@ void testEvaluationf ()
     printf("%a; %f \n", ((g_one + g_small_1) + g_small_2) + g_small_3, ((g_one + g_small_1) + g_small_2) + g_small_3);
     puts(floatEvaluation == 0 ? "Determinisitc" : "Undeterministic");
     puts("------------------");
-
 }
 
 
@@ -138,8 +129,7 @@ void testPhysicsf ()
     double   accumulator;
     time_t   previousTime;
     UFobject player    = {.x = 5, .vx = 1, .vy =1, .updatefun = (UFupdate) UFdefaultUpdate_fun};
-    UFanimal animal    =
-                     {.object.vx = 1, .object.vy =1, .target=&player, .object.updatefun = (UFupdate) UFanimalUpdate_fun};
+    UFanimal animal    = {.object.vx = 1, .object.vy =1, .target=&player, .object.updatefun = (UFupdate) UFanimalUpdate_fun};
     UFobject *world[2] = {&player, (UFobject *) &animal};
     int      size      = sizeof(world) / sizeof(*world);
 
