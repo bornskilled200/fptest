@@ -45,8 +45,6 @@ void systemInformation() {
 #endif
 }
 
-typedef unsigned char *byte_pointer;
-
 /*show bytes takes byte pointer as an argument
   and prints memory contents from byte_pointer
   to byte_pointer + len */
@@ -58,7 +56,7 @@ void show_bytes(void *pointer, int len) {
         printf("%.2x ", start[i]);
 }
 
-#define uf_printbytes(a) show_bytes((byte_pointer) &a, sizeof(a))
+#define uf_printbytes(a) show_bytes(&a, sizeof(a))
 
 union float32 {
     int32_t i;
