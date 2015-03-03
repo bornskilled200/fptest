@@ -119,40 +119,40 @@ typedef struct {
 float fastsin(float radians)
 {
     //always wrap input angle to -PI..PI
-    if (radians < -3.14159265)
-        radians += 6.28318531;
+    if (radians < -3.14159265f)
+        radians += 6.28318531f;
     else
-    if (radians >  3.14159265)
-        radians -= 6.28318531;
+    if (radians >  3.14159265f)
+        radians -= 6.28318531f;
 
 //compute sine
     if (radians < 0)
-        return 1.27323954 * radians + .405284735 * radians * radians;
+        return 1.27323954f * radians + .405284735f * radians * radians;
     else
-        return 1.27323954 * radians - 0.405284735 * radians * radians;
+        return 1.27323954f * radians - 0.405284735f * radians * radians;
 }
 
 float fastcos(float radians)
 {
     //always wrap input angle to -PI..PI
-    if (radians < -3.14159265)
-        radians += 6.28318531;
+    if (radians < -3.14159265f)
+        radians += 6.28318531f;
     else
-    if (radians >  3.14159265)
-        radians -= 6.28318531;
+    if (radians >  3.14159265f)
+        radians -= 6.28318531f;
 
     //compute cosine: sin(radians + PI/2) = cos(radians)
-    radians += 1.57079632;
-    if (radians >  3.14159265)
-        radians -= 6.28318531;
+    radians += 1.57079632f;
+    if (radians >  3.14159265f)
+        radians -= 6.28318531f;
 
     if (radians < 0)
-        return 1.27323954 * radians + 0.405284735 * radians * radians;
+        return 1.27323954f * radians + 0.405284735f * radians * radians;
     else
-        return 1.27323954 * radians - 0.405284735 * radians * radians;
+        return 1.27323954f * radians - 0.405284735f * radians * radians;
 }
 
-double fastsqrt(double fg)
+double fastsqrtd(double fg)
 {
     double n    = fg / 2.0;
     double lstX = 0.0;
@@ -160,6 +160,17 @@ double fastsqrt(double fg)
     {
         lstX = n;
         n    = (n + fg / n) / 2.0;
+    }
+    return n;
+}
+float fastsqrtf(float fg)
+{
+    float n    = fg / 2.0f;
+    float lstX = 0.0f;
+    while (n != lstX)
+    {
+        lstX = n;
+        n    = (n + fg / n) / 2.0f;
     }
     return n;
 }
@@ -179,7 +190,7 @@ void UFanimalUpdate_fun(UFobject **world, UFanimal *self, double delta) {
 
     dx = self->target->x - self->object.x;
     dy = self->target->y - self->object.y;
-    len = fastsqrt(dx * dx + dy * dy);
+    len = fastsqrtf(dx * dx + dy * dy);
     self->object.vx += dx / len * 2;
     self->object.vy += dy / len * 2;
     UFdefaultUpdate_fun(world, (UFobject *) self, delta);
@@ -268,4 +279,6 @@ int main() {
     testEvaluationd();
     testPhysicsf();
     puts("# Test Information End\n");
+
+    return 0;
 }
