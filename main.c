@@ -2,10 +2,9 @@
 #include <stdio.h>
 
 #include <time.h>
-
-#include <float.h>
 #include <stdint.h>
 
+#include <float.h>
 #ifndef FLT_EVAL_METHOD
 #define FLT_EVAL_METHOD -1
 #endif
