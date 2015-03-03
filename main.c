@@ -45,9 +45,6 @@ void systemInformation() {
 #endif
 }
 
-/*show bytes takes byte pointer as an argument
-  and prints memory contents from byte_pointer
-  to byte_pointer + len */
 void show_bytes(void *pointer, int len) {
     unsigned char *start = pointer;
     int i;
@@ -69,20 +66,20 @@ void testEvaluationf() {
     float g_small_2 = (float) (DBL_EPSILON * 0.5);
     float g_small_3 = (float) (DBL_EPSILON * 0.5);
     int evaluationMethod;
-    union float32 fl0, fl1, fl2;
+    union float32 fl0, fl1, fl2, eval;
     fl0.i = 0x3f800000;
     UNUSED(fl1);
     fl2.i = 0x3f800001;
 
-    float f = ((g_one + g_small_1) + g_small_2) + g_small_3;
-    if (f == fl0.f) evaluationMethod = 0;
-    else if (f == fl2.f) evaluationMethod = 2;
+    eval.f = ((g_one + g_small_1) + g_small_2) + g_small_3;
+    if (eval.i == fl0.i) evaluationMethod = 0;
+    else if (eval.i == fl2.i) evaluationMethod = 2;
     else evaluationMethod = -1;
 
     puts("------------------");
     puts("Test Float Immediate store\n");
-    uf_printbytes(f);
-    printf("; %f \n", f);
+    uf_printbytes(eval.f);
+    printf("; %f \n", eval.f);
     printf("Runtime FLT_EVAL_METHOD: %d\n", evaluationMethod);
     puts("------------------");
 }
@@ -123,17 +120,19 @@ typedef struct {
 void UFdefaultUpdate_fun(UFobject **world, UFobject *self, double delta) {
     UNUSED(world);
 
-    self->x += self->vx * delta;
-    self->y += self->vy * delta;
+    self->x += (float)(self->vx * delta);
+    self->y += (float)(self->vy * delta);
 }
 
 void UFanimalUpdate_fun(UFobject **world, UFanimal *self, double delta) {
+    float dx, dy, len;
+
     if (self->target == NULL)
         return;
 
-    float dx = self->target->x - self->object.x;
-    float dy = self->target->y - self->object.y;
-    float len = sqrtf(dx * dx + dy * dy);
+    dx = self->target->x - self->object.x;
+    dy = self->target->y - self->object.y;
+    len = sqrtf(dx * dx + dy * dy);
     self->object.vx += dx / len * 2;
     self->object.vy += dy / len * 2;
     UFdefaultUpdate_fun(world, (UFobject *) self, delta);
@@ -155,8 +154,11 @@ void UFprintWorld(UFobject **world, int size, int tick) {
         UFobject *object = world[i];
         printf("%d: ", i);
         uf_printbytes(object->x);
+        fputs(", ", stdout);
         uf_printbytes(object->y);
+        fputs(", ", stdout);
         uf_printbytes(object->vx);
+        fputs(", ", stdout);
         uf_printbytes(object->vy);
         puts("");
     }
@@ -167,10 +169,20 @@ void testPhysicsf() {
     int i, j, ticks;
     double accumulator;
     time_t previousTime;
-    UFobject player = {.x = 5, .vx = 1, .vy =1, .updatefun = (UFupdate) UFdefaultUpdate_fun};
-    UFanimal animal = {.object.vx = 1, .object.vy =1, .target=&player, .object.updatefun = (UFupdate) UFanimalUpdate_fun};
+    UFobject player;
+    UFanimal animal;
     UFobject *world[2] = {&player, (UFobject *) &animal};
     int size = sizeof(world) / sizeof(*world);
+
+    player.x=5;
+    player.vx =1;
+    player.vy =1;
+    player.updatefun = (UFupdate) UFdefaultUpdate_fun;
+
+    animal.object.vx = 1;
+    animal.object.vy = 1;
+    animal.object.updatefun = (UFupdate) UFanimalUpdate_fun;
+    animal.target=&player;
 
     ticks = 0;
     UFprintWorld(world, size, ticks);
