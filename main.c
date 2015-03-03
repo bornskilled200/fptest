@@ -264,8 +264,9 @@ void testPhysicsf() {
 }
 
 int main() {
-    #ifdef MSVC
-    _PC_24
+    #if defined(UF_FLOAT_EVALUATION) && defined(_MSC_VER) && (_MSC_VER <= 1600)
+    unsigned oldState;
+    _controlfp_s(&oldState, _PC_24, _MCW_PC);
     #endif
 
     puts("# Compililation Information Begin");
