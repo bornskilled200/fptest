@@ -1,7 +1,8 @@
+#define __USE_MINGW_ANSI_STDIO 1
+#include <stdio.h>
+
 #include <time.h>
 #include <math.h>
-
-#include <stdio.h>
 
 #include <float.h>
 #include <stdint.h>
