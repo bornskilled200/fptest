@@ -2,6 +2,8 @@
 A simple example of trying to get consistent floating point results across different architectures and compilers.
 
 I usually have this setup to test different compilers
+
+```sh
 git clone https://github.com/bornskilled200/fptest.git
 cd fptest
 
@@ -19,6 +21,7 @@ cmake --build .
 executable_file.exe > output2.txt
 
 diff output1.txt output2.txt
+```
 
 ##Sources
 These are the sources that helped me to make this example
