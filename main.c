@@ -283,7 +283,7 @@ int main() {
     puts("# Test Information Begin");
     testEvaluationf();
     testEvaluationd();
-    //testPhysicsf();
+    testPhysicsf();
     puts("# Test Information End\n");
 
     #if UF_EVALUATION == 0 && _WIN32 && defined(_MSC_VER) && (_MSC_VER <= 1600)
