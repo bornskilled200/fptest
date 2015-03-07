@@ -1,15 +1,21 @@
 #define __USE_MINGW_ANSI_STDIO 1
+
 #include <stdio.h>
 
 #include <time.h>
 #include <stdint.h>
 
+#define _MINGW_FLOAT_H_
 #include <float.h>
+
 #ifndef FLT_EVAL_METHOD
 #define FLT_EVAL_METHOD -1
 #endif
 
 #define UNUSED(x) (void)(x)
+#ifndef COMPILER_PATH
+#define COMPILER_PATH ""
+#endif
 #ifndef COMPILER_ARGS
 #define COMPILER_ARGS ""
 #endif
@@ -47,8 +53,8 @@ void show_bytes(void *pointer, int len) {
     unsigned char *start = pointer;
     int i;
 
-    for (i = 0; i < len; i++)
-        printf("%.2x ", start[i]);
+    for (i = len - 1; i >= 0; i--)
+        printf("%.2x", start[i]);
 }
 
 #define uf_printbytes(a) show_bytes(&a, sizeof(a))
@@ -89,10 +95,11 @@ union float64 {
 
 void testEvaluationd() {
     int evaluationMethod;
-    union float64 fl0, fl1, fl2;
+    union float64 fl0, fl1, fl2, eval;
     UNUSED(fl0);
     UNUSED(fl1);
     UNUSED(fl2);
+    UNUSED(eval);
 
     evaluationMethod = -1;
 
@@ -115,13 +122,11 @@ typedef struct {
     UFobject *target;
 } UFanimal;
 
-float fastsin(float radians)
-{
+float fastsin(float radians) {
     //always wrap input angle to -PI..PI
     if (radians < -3.14159265f)
         radians += 6.28318531f;
-    else
-    if (radians >  3.14159265f)
+    else if (radians > 3.14159265f)
         radians -= 6.28318531f;
 
 //compute sine
@@ -131,18 +136,16 @@ float fastsin(float radians)
         return 1.27323954f * radians - 0.405284735f * radians * radians;
 }
 
-float fastcos(float radians)
-{
+float fastcos(float radians) {
     //always wrap input angle to -PI..PI
     if (radians < -3.14159265f)
         radians += 6.28318531f;
-    else
-    if (radians >  3.14159265f)
+    else if (radians > 3.14159265f)
         radians -= 6.28318531f;
 
     //compute cosine: sin(radians + PI/2) = cos(radians)
     radians += 1.57079632f;
-    if (radians >  3.14159265f)
+    if (radians > 3.14159265f)
         radians -= 6.28318531f;
 
     if (radians < 0)
@@ -151,25 +154,22 @@ float fastcos(float radians)
         return 1.27323954f * radians - 0.405284735f * radians * radians;
 }
 
-double fastsqrtd(double fg)
-{
-    double n    = fg / 2.0;
+double fastsqrtd(double fg) {
+    double n = fg / 2.0;
     double lstX = 0.0;
-    while (n != lstX)
-    {
+    while (n != lstX) {
         lstX = n;
-        n    = (n + fg / n) / 2.0;
+        n = (n + fg / n) / 2.0;
     }
     return n;
 }
-float fastsqrtf(float fg)
-{
-    float n    = fg / 2.0f;
+
+float fastsqrtf(float fg) {
+    float n = fg / 2.0f;
     float lstX = 0.0f;
-    while (n != lstX)
-    {
+    while (n != lstX) {
         lstX = n;
-        n    = (n + fg / n) / 2.0f;
+        n = (n + fg / n) / 2.0f;
     }
     return n;
 }
@@ -177,8 +177,8 @@ float fastsqrtf(float fg)
 void UFdefaultUpdate_fun(UFobject **world, UFobject *self, double delta) {
     UNUSED(world);
 
-    self->x += (float)(self->vx * delta);
-    self->y += (float)(self->vy * delta);
+    self->x += (float) (self->vx * delta);
+    self->y += (float) (self->vy * delta);
 }
 
 void UFanimalUpdate_fun(UFobject **world, UFanimal *self, double delta) {
@@ -231,10 +231,10 @@ void testPhysicsf() {
     UFobject *world[2] = {&player, (UFobject *) &animal};
     int size = sizeof(world) / sizeof(*world);
 
-    player.x=5;
-    player.y=0;
-    player.vx =1;
-    player.vy =1;
+    player.x = 5;
+    player.y = 0;
+    player.vx = 1;
+    player.vy = 1;
     player.updatefun = (UFupdate) UFdefaultUpdate_fun;
 
     animal.object.x = 0;
@@ -242,7 +242,7 @@ void testPhysicsf() {
     animal.object.vx = 1;
     animal.object.vy = 1;
     animal.object.updatefun = (UFupdate) UFanimalUpdate_fun;
-    animal.target=&player;
+    animal.target = &player;
 
     ticks = 0;
     UFprintWorld(world, size, ticks);
@@ -264,13 +264,15 @@ void testPhysicsf() {
 }
 
 int main() {
-    #if defined(UF_FLOAT_EVALUATION) && defined(_MSC_VER) && (_MSC_VER <= 1600)
-    unsigned oldState;
-    _controlfp_s(&oldState, _PC_24, _MCW_PC);
+    #if UF_EVALUATION == 0 && _WIN32 && defined(_MSC_VER) && (_MSC_VER <= 1600)
+    unsigned int fpu_oldcw;
+    fpu_oldcw = _controlfp(0, 0); // store old vlaue
+    _controlfp(precision, _MCW_PC);
+    // calculation here
     #endif
 
     puts("# Compililation Information Begin");
-    puts(COMPILER_NAME COMPILER_ARGS);
+    puts(COMPILER_PATH COMPILER_ARGS);
     printf("FLT_EVAL_METHOD = %d\n", FLT_EVAL_METHOD);
     puts("# Compililation Information End\n");
 
@@ -281,8 +283,12 @@ int main() {
     puts("# Test Information Begin");
     testEvaluationf();
     testEvaluationd();
-    testPhysicsf();
+    //testPhysicsf();
     puts("# Test Information End\n");
+
+    #if UF_EVALUATION == 0 && _WIN32 && defined(_MSC_VER) && (_MSC_VER <= 1600)
+    _controlfp(fpu_oldcw, _MCW_PC);
+    #endif
 
     return 0;
 }
