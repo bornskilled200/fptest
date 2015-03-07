@@ -267,7 +267,7 @@ int main() {
     #if UF_EVALUATION == 0 && _WIN32 && defined(_MSC_VER) && (_MSC_VER <= 1600)
     unsigned int fpu_oldcw;
     fpu_oldcw = _controlfp(0, 0); // store old vlaue
-    _controlfp(precision, _MCW_PC);
+    _controlfp(_PC_24, _MCW_PC);
     // calculation here
     #endif
 
